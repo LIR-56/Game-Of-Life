@@ -1,8 +1,19 @@
 package life;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
-public class FieldUpdater {
+public class FieldUpdater implements Runnable{
+
+    private final Field field;
+
+    FieldUpdater(Field field) {
+        this.field = field;
+    }
+
+    static Field generateField(int size) {
+        return generateField(size, new Random().nextInt());
+    }
 
     static Field generateField(int size, long seed) {
         Random random = new Random(seed);
@@ -14,13 +25,27 @@ public class FieldUpdater {
         }
         return new Field(matrix, size);
     }
+    @Override
+    public void run() {
+        update(field, 15);
+    }
 
-    static Field update(Field inputField, long generationAmount) {
+    void update(Field inputField, long generationAmount) {
         var field = inputField;
+        System.out.println("Generation #" + (1));
+        System.out.println("Alive: " + field.getAliveAmount());
+        field.outputMatrix();
         for (int i = 0; i < generationAmount; i++) {
             field = nextGeneration(field);
+            field.clean();
+            System.out.println("Generation #" + (i+2));
+            System.out.println("Alive: " + field.getAliveAmount());
+            field.outputMatrix();
+            try {
+                TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException ignored) {
+            }
         }
-        return field;
     }
 
     private static Field nextGeneration(Field field) {
@@ -39,8 +64,8 @@ public class FieldUpdater {
         var matrix = field.getMatrix();
         int leftCoordinateOfNeighbours = j != 0 ? j - 1 : field.getSize() - 1;
         int upCoordinateOfNeighbours = i != 0 ? i - 1 : field.getSize() - 1;
-        int rightCoordinateOfNeighbours = j != field.getSize() - 1 ? j + 1 : 0;
-        int downCoordinateOfNeighbours = i != field.getSize() - 1 ? i + 1 : 0;
+        int rightCoordinateOfNeighbours = j != (field.getSize() - 1) ? j + 1 : 0;
+        int downCoordinateOfNeighbours = i != (field.getSize() - 1) ? i + 1 : 0;
         if (matrix[upCoordinateOfNeighbours][leftCoordinateOfNeighbours]) aliveNeighbours++;
         if (matrix[upCoordinateOfNeighbours][j]) aliveNeighbours++;
         if (matrix[upCoordinateOfNeighbours][rightCoordinateOfNeighbours]) aliveNeighbours++;
@@ -56,6 +81,4 @@ public class FieldUpdater {
             return false;
         } else return matrix[i][j];
     }
-
-
 }
